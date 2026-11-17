@@ -8,7 +8,7 @@ A Claude Code plugin that lets Claude hand work to **Gemini** through Google's *
 
 - **`gemini-delegate` skill** — commands, model ids, effort levels, quota notes and security rules. Claude loads it before delegating.
 - **`delegate.mjs` script** — `run` (edit on a copy, return a diff), `report` (research/analysis, return text), `merge`, `discard`, `cleanup`. No git repo needed: it copies the current disk state and diffs with `git diff --no-index`.
-- **SessionStart hook** — a short set of rules (~1.7K characters) injected in every session, so Claude remembers what to send to Gemini and what to keep: research and scoped edits go to Gemini; long terminal agents, conversation-dependent work and git commits stay in Claude.
+- **SessionStart hook** — a short set of rules (~2.4K characters) injected in every session, so Claude remembers what to send to Gemini and what to keep: research and scoped edits go to Gemini; terminal-heavy work goes to the Claude models inside agy (Antigravity quota); conversation-dependent work, above-high effort and git commits stay in Claude Code.
 
 Works well alongside [model-routing](https://github.com/Daniboy2116/model-routing), which covers choosing between Claude models.
 
@@ -36,8 +36,10 @@ The skill pre-approves its own script during the turn it's used. To skip permiss
 |---|---|
 | `gemini-4-hydrogen-high` | Default: research, scoped code, UI, multimodal, finance |
 | `gemini-4-argon-high` | 256K–1M context, lowest hallucination, complex legal. Limited quota, slow |
-| `gemini-pro-orchestrator-g1-pro` | Orchestrator (Argon): Argon plans, Hydrogen executes. Long multi-file tasks |
+| `gemini-pro-orchestrator-g1-pro` | Orchestrator (Argon): Argon plans, Hydrogen executes. Only very long tasks where Hydrogen alone loses the plan (~4× the tokens, same result in tests) |
+| `claude-sonnet-5-5-high` / `claude-opus-5-5-high` | Claude inside agy, on Antigravity's Claude pool: terminal-heavy work or when the Gemini pool is empty. Max effort high |
 | `gemini-3.8-flash-*` | Fallback only — never for research (fabricates URLs) |
+| Argon low/medium, `gpt-oss-120b` | Never (no gain over Argon high / AA index ~4; GPT-OSS removed 2026-11-18) |
 
 Benchmarks are from Artificial Analysis Intelligence Index v5.0.1, Google model cards and Antigravity docs; models and quotas change often. PRs with fresher data are welcome.
 
