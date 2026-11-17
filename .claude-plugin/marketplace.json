@@ -1,0 +1,12 @@
+{
+  "name": "gemini-delegate-marketplace",
+  "owner": { "name": "Daniboy2116" },
+  "description": "Delegate work from Claude Code to Gemini via Google Antigravity CLI.",
+  "plugins": [
+    {
+      "name": "gemini-delegate",
+      "source": "./plugins/gemini-delegate",
+      "description": "Delegate scoped edits and web research to Gemini on an isolated copy of your project, with diff review before merge."
+    }
+  ]
+}
