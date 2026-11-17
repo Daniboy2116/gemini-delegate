@@ -18,6 +18,14 @@ Works well alongside [model-routing](https://github.com/Daniboy2116/model-routin
 - Node.js 18+
 - git (only for `git diff --no-index`; your project doesn't need to be a repo)
 - Antigravity CLI (`agy`) installed and signed in. The script finds it via the `AGY_PATH` environment variable, the default Windows location (`%LOCALAPPDATA%\agy\bin\agy.exe`), or `agy` on your `PATH`.
+- A Google account for Antigravity. Which models you get depends on your Google AI plan (Antigravity docs, Nov 2026):
+
+  | Plan | Models in agy |
+  |---|---|
+  | Free (no plan) | Hydrogen, 3.8 Flash |
+  | Google AI Pro trial | Hydrogen, Flash; Argon and Orchestrator (Argon) only on eligible devices |
+  | Google AI Pro (paid) | + Argon, Orchestrator (Argon), Claude Sonnet/Opus 5.5 |
+  | Google AI Ultra | + Gemini 4 Carbon, Orchestrator (Carbon) |
 
 ## Install
 
@@ -26,7 +34,11 @@ Works well alongside [model-routing](https://github.com/Daniboy2116/model-routin
 /plugin install gemini-delegate@gemini-delegate-marketplace
 ```
 
-Then start a new session (or run `/reload-plugins`).
+Then start a new session (or run `/reload-plugins`). In that first session Claude asks once which Google AI plan you have and saves it to `~/.claude/gemini-delegate.json`, so its routing only uses models you actually have. To change it later:
+
+```
+node <plugin path>/scripts/delegate.mjs plan --set <free|pro-trial|pro|ultra>
+```
 
 The skill pre-approves its own script during the turn it's used. To skip permission prompts for background runs in later turns too, add an allow rule for `node <plugin path>/scripts/delegate.mjs` to your settings — only if you accept the security trade-off above.
 

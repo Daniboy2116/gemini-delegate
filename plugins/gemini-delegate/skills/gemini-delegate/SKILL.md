@@ -115,6 +115,8 @@ Always pass `--model <id>` explicitly. List what your plan offers with `agy mode
 
 Plan availability (Antigravity docs, Nov 2026): Hydrogen and Flash on all plans; Argon and Orchestrator (Argon) on paid Pro and Ultra; Gemini 4 Carbon and Orchestrator (Carbon) on Ultra/Enterprise only; Claude models on non-trial paid plans.
 
+The user's plan is stored in `~/.claude/gemini-delegate.json` and injected by the SessionStart hook with plan-specific substitutions. Read or change it with `node ${CLAUDE_PLUGIN_ROOT}/scripts/delegate.mjs plan [--set free|pro-trial|pro|ultra]`. If the hook says the plan is unknown, ask the user once (AskUserQuestion) and save it before delegating.
+
 ### Effort levels
 
 Start at **high** with Hydrogen (its default; medium drops from 51 to 41 on the AA index). Go down to low only for mechanical work. Go up to xhigh only if high fails.

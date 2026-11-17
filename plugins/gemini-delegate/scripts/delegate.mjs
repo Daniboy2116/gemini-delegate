@@ -8,6 +8,7 @@ import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 const WORKTREES_ROOT = path.join(os.homedir(), '.claude', 'gemini-delegate-worktrees');
 const DEFAULT_MODEL = 'gemini-4-hydrogen-high';
@@ -88,6 +89,7 @@ function parseArgs(argv) {
     else if (a === '--timeout') out.timeout = argv[++i];
     else if (a === '--trailer') out.trailer = argv[++i];
     else if (a === '--agy') out.agyPath = argv[++i];
+    else if (a === '--set') out.set = argv[++i];
   }
   return out;
 }
@@ -411,13 +413,51 @@ function cleanupDelegate() {
   console.log(JSON.stringify({ cleaned, stillLocked, skippedActive }, null, 2));
 }
 
+// User's Google AI plan decides which agy models exist (antigravity.google/docs/models, Nov 2026).
+const PLAN_FILE = path.join(os.homedir(), '.claude', 'gemini-delegate.json');
+const PLANS = {
+  free: 'Free / no Google AI plan: Hydrogen and 3.8 Flash only. No Argon, no Orchestrator, no Claude inside agy. Instead of Argon use Hydrogen xhigh; terminal work that would go to Claude inside agy stays in Claude Code.',
+  'pro-trial': 'Google AI Pro trial: Hydrogen and Flash; Argon and Orchestrator (Argon) only on eligible devices (check `agy models`). No Claude inside agy (non-trial only): terminal work stays in Claude Code.',
+  pro: 'Google AI Pro (paid): Hydrogen, Flash, Argon, Orchestrator (Argon), Claude Sonnet/Opus 5.5 inside agy. No Carbon. Use the rules above as written.',
+  ultra: 'Google AI Ultra: everything in Pro plus Gemini 4 Carbon (AA index 60, Terminal-Bench 4.1 64.5%, Gemini pool) and Orchestrator (Carbon). Hard reasoning or terminal work: try Carbon high before Claude inside agy or Claude Code; Orchestrator (Carbon) is the variant Google measured near-Carbon at 24% less quota. Get the exact Carbon ids from `agy models`.',
+};
+
+function readPlan() {
+  try { return JSON.parse(fs.readFileSync(PLAN_FILE, 'utf8')).plan; } catch { return undefined; }
+}
+
+function planCommand(args) {
+  if (args.set) {
+    if (!PLANS[args.set]) { console.error(`Unknown plan "${args.set}". Use: ${Object.keys(PLANS).join(' | ')}`); process.exit(2); }
+    fs.mkdirSync(path.dirname(PLAN_FILE), { recursive: true });
+    fs.writeFileSync(PLAN_FILE, JSON.stringify({ plan: args.set, setAt: new Date().toISOString() }, null, 2));
+  }
+  const plan = readPlan();
+  console.log(JSON.stringify({ plan: plan ?? null, file: PLAN_FILE, notes: PLANS[plan] ?? null }, null, 2));
+}
+
+// SessionStart hook: always-on rules plus the plan line (or a one-time request to ask for it).
+function sessionStart() {
+  const rulesPath = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'hooks', 'delegation-rules.md');
+  process.stdout.write(fs.readFileSync(rulesPath, 'utf8'));
+  const plan = readPlan();
+  const self = fwd(fileURLToPath(import.meta.url));
+  if (PLANS[plan]) {
+    console.log(`\n## User's Google plan (set once, change with \`node "${self}" plan --set <free|pro-trial|pro|ultra>\`)\n${PLANS[plan]}`);
+  } else {
+    console.log(`\n## Setup needed: Google plan unknown\nThe gemini-delegate plugin was just installed and doesn't know the user's Google AI plan, which decides which agy models exist. In your first reply of this session, before other work, ask the user once with AskUserQuestion: "Which Google AI plan do you use with Antigravity (agy)?" with options Free (no plan), Google AI Pro trial, Google AI Pro (paid), Google AI Ultra. Then save it: \`node "${self}" plan --set <free|pro-trial|pro|ultra>\`. If they don't know, run \`agy models\` and infer it: Claude models listed -> pro or ultra; a Carbon model listed -> ultra; Argon missing -> free.`);
+  }
+}
+
 const args = parseArgs(process.argv.slice(2));
-if (args.action === 'run') runDelegate(args);
+if (args.action === 'session-start') sessionStart();
+else if (args.action === 'plan') planCommand(args);
+else if (args.action === 'run') runDelegate(args);
 else if (args.action === 'report') reportDelegate(args);
 else if (args.action === 'merge') mergeDelegate(args);
 else if (args.action === 'discard') discardDelegate(args);
 else if (args.action === 'cleanup') cleanupDelegate();
 else {
-  console.error('Unknown action. Use: run | report | merge | discard | cleanup');
+  console.error('Unknown action. Use: run | report | merge | discard | cleanup | plan | session-start');
   process.exit(2);
 }
