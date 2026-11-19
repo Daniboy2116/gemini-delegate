@@ -22,9 +22,9 @@ Works well alongside [model-routing](https://github.com/Daniboy2116/model-routin
 
   | Plan | Models in agy |
   |---|---|
-  | Free (no plan) | Hydrogen, 3.8 Flash |
-  | Google AI Pro trial | Hydrogen, Flash; Argon and Orchestrator (Argon) only on eligible devices |
-  | Google AI Pro (paid) | + Argon, Orchestrator (Argon), Claude Sonnet/Opus 5.5 |
+  | Free / Plus (no plan) | 3.8 Flash only |
+  | Google AI Pro trial | Flash; Neon, Argon and the Orchestrators only on eligible premium devices. No Hydrogen, no Claude |
+  | Google AI Pro (paid) | Hydrogen, Neon, Flash, Argon, Orchestrator (Neon / Argon), Claude Sonnet/Opus 5.5 |
   | Google AI Ultra | + Gemini 4 Carbon, Orchestrator (Carbon) |
 
 ## Install
@@ -42,16 +42,18 @@ node <plugin path>/scripts/delegate.mjs plan --set <free|pro-trial|pro|ultra>
 
 The skill pre-approves its own script during the turn it's used. To skip permission prompts for background runs in later turns too, add an allow rule for `node <plugin path>/scripts/delegate.mjs` to your settings — only if you accept the security trade-off above.
 
-## Models (as of 2026-11-16)
+## Models (as of 2026-11-19)
 
 | Model (`agy models` id) | Use |
 |---|---|
-| `gemini-4-hydrogen-high` | Default: research, scoped code, UI, multimodal, finance |
-| `gemini-4-argon-high` | 256K–1M context, lowest hallucination, complex legal. Limited quota, slow |
-| `gemini-pro-orchestrator-g1-pro` | Orchestrator (Argon): Argon plans, Hydrogen executes. Only very long tasks where Hydrogen alone loses the plan (~4× the tokens, same result in tests) |
-| `claude-sonnet-5-5-high` / `claude-opus-5-5-high` | Claude inside agy, on Antigravity's Claude pool: terminal-heavy work or when the Gemini pool is empty. Max effort high |
+| `gemini-4-hydrogen-high` | Default: research, scoped code, UI |
+| `gemini-4-neon-high` | Terminal/agentic work, multi-file debugging, harder reasoning, long context, multimodal, finance/legal (AA index 60, above Opus 5.5 xhigh). ~2× Hydrogen's quota per token |
+| `gemini-4-neon-low` | Mechanical/extraction work (beats Hydrogen medium on AA, measured ~⅓ of Hydrogen high's tokens) |
+| `gemini-4-argon-high` | Lowest hallucination (4%), context above 512K. Limited quota, slow |
+| `gemini-pro-orchestrator-neon` | Orchestrator (Neon): Neon plans, Hydrogen executes. Only very long tasks where a single model loses the plan. No published benchmark |
+| `claude-sonnet-5-5-high` / `claude-opus-5-5-high` | Claude inside agy, on Antigravity's Claude pool: when the Gemini pool is empty or Neon failed on terminal work. Max effort high |
 | `gemini-3.8-flash-*` | Fallback only — never for research (fabricates URLs) |
-| Argon low/medium, `gpt-oss-120b` | Never (no gain over Argon high / AA index ~4; GPT-OSS removed 2026-11-18) |
+| Neon xhigh, Argon low/medium, `gpt-oss-120b` | Never or almost never (+1 point for 2.3× tokens / no gain over Argon high / AA index ~4; GPT-OSS removed 2026-11-18) |
 
 Benchmarks are from Artificial Analysis Intelligence Index v5.0.1, Google model cards and Antigravity docs; models and quotas change often. PRs with fresher data are welcome.
 
