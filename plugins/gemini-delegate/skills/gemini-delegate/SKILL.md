@@ -1,6 +1,6 @@
 ---
 name: gemini-delegate
-description: "Delegate an edit/implementation task (run) or a research/analysis/report task (report) to Gemini through Google's Antigravity CLI (agy), on an isolated copy of the project — no git required. Default model: Gemini 4 Hydrogen high (best tested option for web research and well-specified code); Gemini 4 Neon high for terminal/agentic and harder reasoning. Covers which Gemini model and effort level to pick, parallel runs, diff review and merge, quota, and the security limits of agy. Never against a production or live system."
+description: "Use BEFORE spawning any Claude subagent, doing web research, or making bulk/mechanical/scoped edits: check whether Gemini (agy) should do it instead, on the user's Google quota. Delegate an edit/implementation task (run) or a research/analysis/report task (report) to Gemini through Google's Antigravity CLI (agy), on an isolated copy of the project — no git required. Default model: Gemini 4 Hydrogen high (best tested option for web research and well-specified code); Gemini 4 Neon high for terminal/agentic and harder reasoning. Covers which Gemini model and effort level to pick, parallel runs, diff review and merge, quota, and the security limits of agy. Never against a production or live system."
 allowed-tools: Bash(node ${CLAUDE_PLUGIN_ROOT}/scripts/delegate.mjs *)
 ---
 

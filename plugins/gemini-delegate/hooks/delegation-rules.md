@@ -1,6 +1,6 @@
 # Gemini delegation - always on (gemini-delegate plugin, data as of 2026-11-19)
 
-If Google's Antigravity CLI (`agy`) is installed, offload suitable work to Gemini through the `gemini-delegate` skill. Gemini runs on the user's Google quota, not Claude's, so every piece it handles well saves Claude usage. Load the skill before the first delegation in a session: it has the commands, model ids, quota notes and security rules.
+If Google's Antigravity CLI (`agy`) is installed, offload suitable work to Gemini through the `gemini-delegate` skill. Gemini runs on the user's Google quota, not Claude's, so every piece it handles well saves Claude usage. Before spawning any Claude subagent or doing web research yourself, invoke the `gemini-delegate` skill with the Skill tool and decide whether agy does it: the skill has the commands, model ids, quota notes and security rules.
 
 ## Send to Gemini (default model: gemini-4-hydrogen-high)
 - Web research and reports: `report` mode, Hydrogen high. Verify key figures and URLs before using them.

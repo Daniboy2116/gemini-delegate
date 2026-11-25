@@ -449,8 +449,14 @@ function sessionStart() {
   }
 }
 
+// UserPromptSubmit hook: SessionStart rules fade in long sessions, so re-arm the trigger every turn (~60 tokens).
+function promptReminder() {
+  console.log('gemini-delegate: before spawning a Claude subagent, doing web research, or bulk/mechanical/scoped edits, invoke the `gemini-delegate` skill (Skill tool) and send that work to agy unless it needs this conversation\'s context.');
+}
+
 const args = parseArgs(process.argv.slice(2));
 if (args.action === 'session-start') sessionStart();
+else if (args.action === 'prompt-reminder') promptReminder();
 else if (args.action === 'plan') planCommand(args);
 else if (args.action === 'run') runDelegate(args);
 else if (args.action === 'report') reportDelegate(args);
@@ -458,6 +464,6 @@ else if (args.action === 'merge') mergeDelegate(args);
 else if (args.action === 'discard') discardDelegate(args);
 else if (args.action === 'cleanup') cleanupDelegate();
 else {
-  console.error('Unknown action. Use: run | report | merge | discard | cleanup | plan | session-start');
+  console.error('Unknown action. Use: run | report | merge | discard | cleanup | plan | session-start | prompt-reminder');
   process.exit(2);
 }
