@@ -32,9 +32,11 @@ const isEnvFile = (base) => base === '.env' || base.startsWith('.env.');
 // (filtered, doesn't) and reports every excluded path as deleted. merge then
 // deletes them for real — this destroyed a real project's .git history in
 // testing. Dirs need /** to match contents; files must NOT have it (that
-// pattern only matches paths *inside* a directory of that name).
+// pattern only matches paths *inside* a directory of that name). The copy filter
+// skips these names whether they are dirs or files, so both forms are excluded:
+// a submodule's `.git` is a FILE, and without the bare form merge deleted it.
 const EXCLUDE_PATHSPECS = [
-  ...[...COPY_EXCLUDE_DIRS].map((name) => `:(exclude,glob)**/${name}/**`),
+  ...[...COPY_EXCLUDE_DIRS].flatMap((name) => [`:(exclude,glob)**/${name}/**`, `:(exclude,glob)**/${name}`]),
   ...[...COPY_EXCLUDE_FILES].map((name) => `:(exclude,glob)**/${name}`),
   ':(exclude,glob)**/.env',
   ':(exclude,glob)**/.env.*',
@@ -57,9 +59,17 @@ function sh(cmd, args, opts = {}) {
 // exit >1 as "just no output" silently reported "nothing changed" on a real
 // diff failure (huge excluded build dir choking the diff). Surfaces the
 // error instead of swallowing it.
+// Also: git exits 1 (same as "differences found") when it can't read a file,
+// e.g. a path over Windows' 260-char limit inside the deep worktree copy; that
+// returned an empty diff and merge copied nothing. core.longpaths lifts the
+// limit, and any `error:`/`fatal:` line in stderr now counts as a failure.
 function gitDiffNoIndex(a, b, extraArgs = []) {
-  const res = spawnSync('git', ['diff', '--no-index', ...extraArgs, a, b, '--', ...EXCLUDE_PATHSPECS], { encoding: 'utf8' });
-  const error = res.status > 1 ? (res.stderr || `git diff --no-index exited ${res.status}`).trim() : null;
+  const res = spawnSync('git', ['-c', 'core.longpaths=true', '-c', 'core.safecrlf=false', 'diff', '--no-index', ...extraArgs, a, b, '--', ...EXCLUDE_PATHSPECS], { encoding: 'utf8', maxBuffer: 256 * 1024 * 1024 });
+  const errLines = (res.stderr || '').split(/\r?\n/).filter((l) => /^(error|fatal):/.test(l));
+  const error = res.error ? res.error.message
+    : res.status > 1 ? (res.stderr || `git diff --no-index exited ${res.status}`).trim()
+    : errLines.length ? errLines.join('\n')
+    : null;
   return { stdout: res.stdout || '', error };
 }
 
