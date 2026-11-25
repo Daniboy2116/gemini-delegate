@@ -158,6 +158,9 @@ function computeTripwire(startTime) {
     path.join(os.homedir(), 'Documents'),
     path.join(os.homedir(), '.ssh'),
     path.join(os.homedir(), '.aws'),
+    // agy 1.5.16+ loads user-global skills from here in every session: same persistence risk as mcp_config.json
+    path.join(os.homedir(), '.agents'),
+    path.join(os.homedir(), '.agents', 'skills'),
   ].filter(fs.existsSync);
   const tripwire = [];
   for (const dir of sentinelDirs) {
@@ -413,13 +416,13 @@ function cleanupDelegate() {
   console.log(JSON.stringify({ cleaned, stillLocked, skippedActive }, null, 2));
 }
 
-// User's Google AI plan decides which agy models exist (antigravity.google/docs/models, checked 2026-11-19).
+// User's Google AI plan decides which agy models exist (antigravity.google/docs/models and /docs/plans, checked 2026-11-24).
 const PLAN_FILE = path.join(os.homedir(), '.claude', 'gemini-delegate.json');
 const PLANS = {
-  free: 'Free / Plus / no Google AI plan: only Gemini 3.8 Flash in agy (no Hydrogen, Neon, Argon, Orchestrator or Claude since 2026-11-18). Flash is weak (AA index 31) and fabricates URLs: delegate only simple mechanical edits with a checkable result, never research; everything else stays in Claude Code.',
-  'pro-trial': 'Google AI Pro trial: Flash; Neon, Argon and the Orchestrators only on eligible premium devices; no Hydrogen and no Claude inside agy (non-trial only). Check `agy models`. If Neon is listed, use gemini-4-neon-low where the rules say Hydrogen medium and gemini-4-neon-medium where they say Hydrogen high; otherwise only simple mechanical edits on Flash. Terminal work without Neon stays in Claude Code.',
-  pro: 'Google AI Pro (paid): Hydrogen, Neon, Flash, Argon, Orchestrator (Neon), Orchestrator (Argon), Claude Sonnet/Opus 5.5 inside agy. No Carbon. Use the rules above as written.',
-  ultra: 'Google AI Ultra: everything in Pro plus Gemini 4 Carbon and Orchestrator (Carbon). Neon high matches Carbon high on the AA index (60 vs 60) at half the cost and time ($3.74 vs $7.76, 14.8 vs 37 min), so use Neon high first and Carbon high only when Neon failed on a long-horizon task. Since 2026-11-17 many Ultra accounts report degraded, near-zero-thinking answers in Antigravity: grade every result on tests or the diff. Get the exact Carbon ids from `agy models`.',
+  free: 'Free / Plus / no Google AI plan: Gemini 4 Hydrogen (and 3.8 Flash until 2026-11-30) in agy, on a weekly quota. No Neon, Carbon, Orchestrator or Claude. Use Hydrogen high for research and well-specified edits, Hydrogen medium where the rules say Neon low; everything the rules send to Neon or Carbon (terminal work, hard reasoning) stays in Claude Code. The weekly quota is small: delegate the pieces that save the most Claude work.',
+  'pro-trial': 'Google AI Pro trial: Hydrogen plus a limited set; Neon, Carbon, Argon and Orchestrator only on eligible premium devices; no Claude inside agy (non-trial only). Check `agy models`: use what is listed and treat the rest as Free. Terminal work without Neon stays in Claude Code.',
+  pro: 'Google AI Pro (paid): Hydrogen, Neon, Carbon, Orchestrator (Carbon / Neon), Argon (until 2026-11-30), Claude Sonnet/Opus 5.5 inside agy. Use the rules above as written. Carbon spends quota fast (~4x Hydrogen, ~8x from 2026-12-01): only where the rules name it.',
+  ultra: 'Google AI Ultra: same models as paid Pro with 5x ($100) or 20x ($200) its quota. Use the rules above as written; with 20x, Carbon high is affordable as the first choice for long terminal sessions.',
 };
 
 function readPlan() {
@@ -445,7 +448,7 @@ function sessionStart() {
   if (PLANS[plan]) {
     console.log(`\n## User's Google plan (set once, change with \`node "${self}" plan --set <free|pro-trial|pro|ultra>\`)\n${PLANS[plan]}`);
   } else {
-    console.log(`\n## Setup needed: Google plan unknown\nThe gemini-delegate plugin was just installed and doesn't know the user's Google AI plan, which decides which agy models exist. In your first reply of this session, before other work, ask the user once with AskUserQuestion: "Which Google AI plan do you use with Antigravity (agy)?" with options Free (no plan), Google AI Pro trial, Google AI Pro (paid), Google AI Ultra. Then save it: \`node "${self}" plan --set <free|pro-trial|pro|ultra>\`. If they don't know, run \`agy models\` and infer it: a Carbon model listed -> ultra; Hydrogen and Claude models listed -> pro; Hydrogen missing but Neon or Argon listed -> pro-trial; only Flash -> free.`);
+    console.log(`\n## Setup needed: Google plan unknown\nThe gemini-delegate plugin was just installed and doesn't know the user's Google AI plan, which decides which agy models exist. In your first reply of this session, before other work, ask the user once with AskUserQuestion: "Which Google AI plan do you use with Antigravity (agy)?" with options Free (no plan), Google AI Pro trial, Google AI Pro (paid), Google AI Ultra. Then save it: \`node "${self}" plan --set <free|pro-trial|pro|ultra>\`. If they don't know, run \`agy models\` and infer it: Claude models listed -> pro (or ultra: agy can't tell them apart, so ask); Neon or Carbon listed without Claude -> pro-trial; only Hydrogen/Flash -> free.`);
   }
 }
 
