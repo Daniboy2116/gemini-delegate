@@ -53,10 +53,11 @@ The skill pre-approves its own script during the turn it's used. To skip permiss
 | `gemini-4-carbon-medium` | Answers that must not hallucinate (4.2% on AA-Omniscience, lowest measured) |
 | `gemini-pro-orchestrator` / `-neon` | Orchestrator (Carbon / Neon plans, Hydrogen executes): long multi-step tasks only |
 | `claude-sonnet-5-5-high` / `claude-opus-5-5-high` | Claude inside agy, on Antigravity's Claude pool: Gemini pool empty, terminal work Gemini failed, or frontend/prose off Claude Code quota |
-| Carbon low, Neon xhigh | Never or almost never |
+| `gemini-4-neon-xhigh` | Last Gemini step before Opus xhigh/max for hard reasoning (AA 62, top available model) |
+| Carbon low | Never |
 | Argon, Orchestrator (Argon), 3.8 Flash, GPT-OSS | Leaving Antigravity on 2026-11-30 |
 
-The skill also has a domain-by-domain comparison against Claude Haiku/Sonnet/Opus/Fable (terminal, real-repo coding, frontend, prose, hallucination, science, long context, video, tool use) and when each Orchestrator pays off.
+The skill also has a domain-by-domain comparison against Claude Haiku/Sonnet/Opus, with Opus as the ceiling and Fable only on request (terminal, real-repo coding, frontend, prose, hallucination, science, long context, video, tool use) and when each Orchestrator pays off.
 
 Benchmarks are from Artificial Analysis Intelligence Index v5.0.2, tbench.ai, LMArena/DesignArena/EQ-Bench, Google and Anthropic model cards and Antigravity docs; models and quotas change often. PRs with fresher data are welcome.
 

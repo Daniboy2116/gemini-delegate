@@ -42,7 +42,7 @@ Artificial Analysis Intelligence Index **v5.0.2** (artificialanalysis.ai, checke
 | Claude Haiku 5.5 | 19 | 25 | 30 | 35 | 37 |
 | Claude Sonnet 5.5 | 26 | 31 | 41 | 50 | 55 |
 | Claude Opus 5.5 | 35 | 48 | 52 | 58 | 59 |
-| Claude Fable 5.2 | 54 | 56 | 62 | 62 | 65 |
+| Claude Fable 5.2 (separate billing, only if the user asks) | 54 | 56 | 62 | 62 | 65 |
 | **Gemini 4 Carbon** | 54 | 58 | **60** | — | — |
 | **Gemini 4 Neon** | 44 | 55 | **60** | 62 | — |
 | **Gemini 4 Hydrogen** | 27 | 41 | **51** | 54 | — |
@@ -58,33 +58,36 @@ Per-effort detail — index · AA $/task · minutes/task · AA hallucination rat
 | Hydrogen | 27 · $0.29 | 41 · $0.80 | **51 · $1.87 · 8 min · 8.7%** | 54 · $3.16 · 16 min · 8.5% |
 | Argon | — | 48 | 51 · $9.95 · 23 min · 4.3% | — |
 
+**Ceiling = Claude Opus 5.5.** On most plans Fable is billed as separate usage, so Opus xhigh/max is the top Claude reference everywhere in this skill. Use Fable only when the user explicitly asks for it. Fable figures stay in the tables for reference.
+
 What this means for routing:
+- **Against Opus as the ceiling, Gemini already reaches the top:** Neon high and Carbon high (60) beat Opus max (59), and **Neon xhigh (62) is the highest-scoring model available**. So the escalation past Neon high is Carbon high or Neon xhigh in agy before Opus xhigh/max in Claude Code.
 - **Hydrogen high (51) ≈ Opus high (52) and beats Sonnet up to high and every Haiku level.** Anything you'd give a Haiku/Sonnet subagent or a cold Opus-high subagent goes to Hydrogen high first if it can be fully specified.
 - **Neon high (60) = Carbon high (60) at half the quota and 2.5× the speed**, and beats Opus xhigh (58). Neon high stays the "hard part" model.
 - **Carbon low is never worth it** (54 at $7.19; Neon medium gives 55 for $1.90). **Carbon medium is the "must not hallucinate" model** (4.2%, the lowest of any model here, at index 58) and replaces Argon high.
 - **Carbon high earns its cost only where it is measurably ahead:** long terminal work (below), stable prompt cache in long slow sessions (Known issues), and 256K–1M retrieval (GraphWalks 96.2%, Google-reported).
-- **Neon xhigh (62)**: +2 points over high for 1.7× the quota and where its cache bug hurts most: almost never.
+- **Neon xhigh (62)**: +2 points over high for 1.7× the quota and where its cache bug hurts most. Not a default, but it is the last Gemini step for hard reasoning that Neon high failed, before Opus xhigh/max (keep the run short).
 
 ### Domain by domain: Gemini vs Claude
 
 Sources: AA (independent, same harness), tbench.ai (independent), LMArena/DesignArena/EQ-Bench (independent), Google and Anthropic model cards (official, effort usually not stated). Checked 2026-11-24.
 
-| Domain | Best Gemini | Best Claude | Route |
+| Domain | Best Gemini | Claude (Opus = ceiling; Fable for reference) | Route |
 |---|---|---|---|
-| Terminal / agentic (tbench.ai TB 4.1, each vendor's harness) | Carbon high 64.5%, Neon xhigh 61.2%, Hydrogen high 56.4% | Opus max 65.8%, Fable max 65.8%, Sonnet max 63.9%, Haiku max 40.0% | Neon high first; Carbon high / Orchestrator (Carbon) on long ones; Claude Code Opus if both fail |
-| Terminal (AA's own TB 4.1 run, same harness) | **Carbon high 66.2%**, Neon xhigh 65.2% | Sonnet max 65.2%, Fable max 61.6%, Opus xhigh 59.6% | Same harness: Carbon high is the best single model |
-| Real-repo coding / PR quality | Carbon FrontierSWE v2 61.2% | Fable FrontierSWE v2 69.9%, Opus SWE-bench Multimodal 70.2% | Code that must be PR-ready with little review, multi-turn design: Claude. Well-specified pieces: Hydrogen |
-| Frontend / UI | LMArena WebDev Carbon 1768; DesignArena Website Neon 1355 | WebDev Fable 1838, Opus 1815, Sonnet 1772; DesignArena Fullstack Fable 1475 | Complex or taste-heavy UI: Claude. Simple pages, scaffolding, well-specified components: Hydrogen high |
+| Terminal / agentic (tbench.ai TB 4.1, each vendor's harness) | Carbon high 64.5%, Neon xhigh 61.2%, Hydrogen high 56.4% | Opus max 65.8%, Sonnet max 63.9%, Haiku max 40.0% (Fable max 65.8%) | Near tie with Opus max. Neon high first; Carbon high / Orchestrator (Carbon) on long ones; Claude Code Opus if both fail |
+| Terminal (AA's own TB 4.1 run, same harness) | **Carbon high 66.2%**, Neon xhigh 65.2% | Sonnet max 65.2%, Opus xhigh 59.6% (Fable max 61.6%) | Same harness: Carbon high beats Opus |
+| Real-repo coding / PR quality | Carbon FrontierSWE v2 61.2% | Opus SWE-bench Multimodal 70.2%; Opus 89.4% vs Neon 77.4% on multi-turn PR quality (bito.ai) (Fable FrontierSWE v2 69.9%) | Code that must be PR-ready with little review, multi-turn design: Claude Opus. Well-specified pieces: Hydrogen |
+| Frontend / UI | LMArena WebDev Carbon 1768; DesignArena Website Neon 1355 | WebDev Opus 1815, Sonnet 1772; DesignArena Fullstack Opus 1453 (Fable 1838 / 1475) | Complex or taste-heavy UI: Claude (Opus/Sonnet). Simple pages, scaffolding, well-specified components: Hydrogen high |
 | Prose, emails, specs | LMArena text Carbon 1527 (no style split) | EQ-Bench Creative Writing v3 Opus 2051 vs Argon 1758 | Judgment prose: Claude (Sonnet) |
-| Factual accuracy / hallucination (AA-Omniscience) | Carbon medium 4.2%, Hydrogen 8.5–8.7%, Carbon high 11.4%, Neon 14% | Claude 43–67% hallucination rate (Fable max has the most correct answers: index 66.8 vs Neon xhigh 54.8) | Research, fact lookup: Gemini (Hydrogen high; Carbon medium when a wrong answer is costly). Fable knows more but guesses more |
-| Science (AA HLE-Diamond) | Neon xhigh 71.3%, Carbon high 69.1% | Fable max 80.2%, Opus max 67.9% | Hardest science: Fable; otherwise Neon high |
-| Math | FrontierMath T4 Neon 97.6%, Carbon 95.1% (Epoch) | Fable 100%, Opus 95.0% | Tie below Fable; AIME is saturated (100% for most) |
+| Factual accuracy / hallucination (AA-Omniscience) | Carbon medium 4.2%, Hydrogen 8.5–8.7%, Carbon high 11.4%, Neon 14% | Opus 50–64% hallucination rate; Omniscience index Opus max 48.1 vs Neon xhigh 54.8, Carbon high 53.5 (Fable max 66.8) | Research, fact lookup: Gemini, which both knows more and guesses less than Opus (Hydrogen high; Carbon medium when a wrong answer is costly) |
+| Science (AA HLE-Diamond) | Neon xhigh 71.3%, Carbon high 69.1% | Opus max 67.9% (Fable max 80.2%) | Gemini beats Opus: Neon high, then Neon xhigh |
+| Math | FrontierMath T4 Neon 97.6%, Carbon 95.1% (Epoch) | Opus 95.0% (Fable 100%) | Gemini ≥ Opus: Neon high. AIME is saturated (100% for most) |
 | Long context retrieval 256K–1M (GraphWalks, Google table) | Carbon 96.2%, Neon 95.2% | Opus 66.8% | Huge documents/repos: Gemini (Neon capped at 512K in agy; Carbon's agy cap not documented) |
-| Long-context reasoning (AA-LCR) | no Carbon entry | Opus 84.7%, Fable 83.3% | Under ~200K with hard reasoning: Claude is fine |
+| Long-context reasoning (AA-LCR) | no Carbon entry | Opus 84.7% | Under ~200K with hard reasoning: Opus is fine |
 | Video | LVBench Argon 91.7%, Neon 89.0% | Opus 83.7% | Gemini (Neon high after Argon leaves) |
-| Computer use (OSWorld 2.1, Anthropic table) | Carbon 81.5% | Fable 89.3%, Opus 87.2% | Claude |
-| Tool use | MCP Atlas Argon 90.7%; AutomationBench-AA Neon xhigh 79.3%, Carbon 77.8% | MCP Atlas Opus 85.4%; AutomationBench Fable max 76.4% | Gemini is competitive |
-| Speed (AA tok/s) | Hydrogen 172, Neon 101, Carbon 54 | Haiku 258, Sonnet 155, Opus 117, Fable 112 | Latency is free for this user; ignore unless asked |
+| Computer use (OSWorld 2.1, Anthropic table) | Carbon 81.5% | Opus 87.2% (Fable 89.3%) | Claude |
+| Tool use | MCP Atlas Argon 90.7%; AutomationBench-AA Neon xhigh 79.3%, Carbon 77.8% | MCP Atlas Opus 85.4% | Gemini is competitive |
+| Speed (AA tok/s) | Hydrogen 172, Neon 101, Carbon 54 | Haiku 258, Sonnet 155, Opus 117 | Latency is free for this user; ignore unless asked |
 
 Third-party coding tests agree: on a small parser task Carbon high took 308 s and 19.7K tokens vs Neon 49 s / 6K and Opus 12 s / 1.4K (flaviocopes.com); in a multi-turn PR-quality comparison Opus 5.5 scored 89.4% vs Neon 77.4% (bito.ai). **Carbon over-thinks easy tasks.**
 
@@ -153,7 +156,7 @@ Rule of thumb: an Orchestrator is worth it only when the task is long enough tha
 | Well-specified edit, script, simple UI | agy `run`, Hydrogen high | Neon high → Claude per model-routing |
 | Bulk mechanical change, extraction | agy `run`, Neon low | Hydrogen medium/high |
 | Long multi-file refactor or feature | agy `run`, Hydrogen high | Neon high → Orchestrator (Carbon) if it's long and both lost the plan → Claude Opus medium/high |
-| Multi-file debugging, hard reasoning, cold above-Opus-high work | agy `run`, Neon high | Carbon high → Claude Opus xhigh / Fable |
+| Multi-file debugging, hard reasoning, cold above-Opus-high work | agy `run`, Neon high | Carbon high or Neon xhigh → Claude Opus xhigh/max |
 | Terminal-heavy / multi-step agentic, short (<~200K context, turns <30 s apart) | agy Neon high | Carbon high → agy `claude-sonnet-5-5-high` → Claude Code Opus high/xhigh |
 | Terminal-heavy, long or slow (hours, long gaps between turns, big context) | agy Carbon high or Orchestrator (Carbon) (stable cache) | agy `claude-sonnet-5-5-high` → Claude Code Opus high/xhigh |
 | "Must not hallucinate" answers | Carbon medium (4.2%) | Hydrogen high/xhigh (8.5–8.7%) → Claude Opus high with sources |
@@ -171,7 +174,7 @@ Rule of thumb: an Orchestrator is worth it only when the task is long enough tha
 
 **No — keep it in Claude:**
 - Anything that depends on the current conversation's context: Gemini starts cold.
-- Work that already failed on Neon high and Carbon high, or that needs Fable-level reasoning (HLE, hardest science, FrontierSWE-style repo work).
+- Work that already failed on Neon high, Carbon high and Neon xhigh: Opus xhigh/max in Claude Code. Fable only if the user explicitly asks for it.
 - Complex frontend, computer use, and prose where taste matters: Claude leads every arena for these.
 - **Not Hydrogen for long agentic terminal work** (56% vs 64–66%).
 - **Not Carbon for easy or short tasks** (it over-thinks: 6× Neon's time on a small parser), **not Carbon low ever**, and not Carbon where Neon high is enough (2× the quota now, ~4× from Dec 1).
@@ -192,7 +195,7 @@ Always pass `--model <id>` explicitly. List what your plan offers with `agy mode
 | `gemini-4-neon-high` | Terminal/agentic work, multi-file debugging, reasoning Hydrogen failed, long context (512K cap in agy), multimodal, finance/legal | ~2× |
 | `gemini-4-neon-low` | Mechanical/extraction work (beats Hydrogen medium on AA at lower cost). Never for terminal work (32.8%) | ~0.4× |
 | `gemini-4-neon-medium` | Rarely: index 55 at Hydrogen high's AA $/task, but measured ~1.5× its quota | ~1–1.5× |
-| `gemini-4-neon-xhigh` | Almost never: +2 points over high for 1.7× the quota | ~3.5× |
+| `gemini-4-neon-xhigh` | Last Gemini step for hard reasoning Neon high failed (AA 62, top available model), before Opus xhigh/max. Keep runs short (cache bug) | ~3.5× |
 | `gemini-4-carbon-medium` | "Must not hallucinate" (4.2%, lowest measured), index 58. Replaces Argon high | ~3.5× |
 | `gemini-4-carbon-high` | Terminal work Neon high failed; long, slow agentic sessions (cache stays warm); context above 512K. Slow (~38 min per AA task) | ~4× (~8× from Dec 1) |
 | `gemini-4-carbon-low` | Never: Neon medium scores higher for ¼ of the quota | ~4× |
