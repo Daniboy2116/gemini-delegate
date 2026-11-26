@@ -9,6 +9,8 @@ A Claude Code plugin that lets Claude hand work to **Gemini** through Google's *
 - **`gemini-delegate` skill** — commands, model ids, effort levels, quota notes and security rules. Claude loads it before delegating.
 - **`delegate.mjs` script** — `run` (edit on a copy, return a diff), `report` (research/analysis, return text), `merge`, `discard`, `cleanup`. No git repo needed: it copies the current disk state and diffs with `git diff --no-index`.
 - **SessionStart hook** — a short set of rules (~4K characters) injected in every session, so Claude remembers what to send to Gemini and what to keep: research and scoped edits go to Gemini; terminal-heavy work goes to Neon/Carbon, then the Claude models inside agy (Antigravity quota); conversation-dependent work, above-high effort and git commits stay in Claude Code.
+- **UserPromptSubmit hook** — every prompt, a one-line rule to split the request and send the agy-suited pieces to Gemini; a bare `/gemini-delegate` prompt loads the skill.
+- **PreToolUse gate** — the first subagent, web search or web fetch of each turn is denied once with the agy commands, so Claude decides on Gemini before doing that work itself; retrying the same call passes.
 
 Works well alongside [model-routing](https://github.com/Daniboy2116/model-routing), which covers choosing between Claude models.
 

@@ -463,22 +463,51 @@ function sessionStart() {
 }
 
 // UserPromptSubmit hook: SessionStart rules fade in long sessions, so re-arm the trigger every turn (~60 tokens).
+function readHookInput() {
+  try { return JSON.parse(fs.readFileSync(0, 'utf8')); } catch { return {}; }
+}
+
+// One marker per session: present = the agy check already happened this turn.
+function gateFile(sessionId) {
+  return path.join(os.tmpdir(), `gemini-delegate-gate-${String(sessionId || 'nosession').replace(/[^\w-]/g, '')}`);
+}
+
+// PreToolUse hook on Agent/WebSearch/WebFetch: the first such call each turn is denied once so
+// Claude decides on agy before doing the work itself; retrying the same call passes.
+function preToolGate() {
+  const input = readHookInput();
+  const subagent = input.tool_input?.subagent_type || '';
+  if (/^claude-security:/.test(subagent)) return; // plugin-internal agents, not delegable
+  const marker = gateFile(input.session_id);
+  if (fs.existsSync(marker)) return;
+  try { fs.writeFileSync(marker, ''); } catch { return; }
+  const self = fwd(fileURLToPath(import.meta.url));
+  const reason = `gemini-delegate: paused once this turn so you check agy first (Gemini runs on the user's Google quota, not Claude's; the user wants you to delegate on your own without being told). `
+    + `Web research / fact lookup / summaries of public info -> \`node "${self}" report --dir "<empty or project folder>" --task "<self-contained question>" --model gemini-4-hydrogen-high\` (run it in the background, then verify key facts). `
+    + `Scoped, well-specified edits, scripts, bulk/mechanical work -> \`node "${self}" run --dir "<project folder>" --task "<self-contained task>" --model gemini-4-hydrogen-high\`, then review the full diff before merge. `
+    + `For model choice and details invoke the \`gemini-delegate:gemini-delegate\` skill. `
+    + `Only if this really needs this conversation's context, or agy already failed at it, retry this exact call: it will pass.`;
+  console.log(JSON.stringify({ hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: 'deny', permissionDecisionReason: reason } }));
+}
+
 function promptReminder() {
   const skillPath = fwd(path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'skills', 'gemini-delegate', 'SKILL.md'));
-  let prompt = '';
-  try { prompt = JSON.parse(fs.readFileSync(0, 'utf8')).prompt || ''; } catch {}
+  const input = readHookInput();
+  try { fs.rmSync(gateFile(input.session_id), { force: true }); } catch {}
+  const prompt = input.prompt || '';
   // Plugin skills are namespaced (/gemini-delegate:gemini-delegate), so a bare /gemini-delegate arrives as plain text: load it explicitly.
   const m = prompt.trim().match(/^\/gemini-delegate(?::gemini-delegate)?\b([\s\S]*)$/i);
   if (m) {
     console.log(`The user invoked /gemini-delegate. Before anything else, invoke the \`gemini-delegate:gemini-delegate\` skill with the Skill tool (if that fails, Read ${skillPath} in full) and follow it for this request: ${m[1].trim() || '(no arguments: ask what to delegate)'}`);
     return;
   }
-  console.log(`gemini-delegate: before spawning a Claude subagent, doing web research, or bulk/mechanical/scoped edits, invoke the \`gemini-delegate:gemini-delegate\` skill (Skill tool; if unavailable, Read ${skillPath}) and send that work to agy unless it needs this conversation's context.`);
+  console.log(`gemini-delegate (decide on your own, the user should never have to ask): before starting, split this request into pieces. Any piece that is web research/fact lookup, or a scoped well-specified edit/script, or bulk/mechanical work that does not need this conversation's context goes to agy (\`gemini-delegate:gemini-delegate\` skill; if unavailable, Read ${skillPath}), running in the background while you do the rest. Keep in Claude only design decisions, work that needs this conversation, reviewing agy's diff, and commits.`);
 }
 
 const args = parseArgs(process.argv.slice(2));
 if (args.action === 'session-start') sessionStart();
 else if (args.action === 'prompt-reminder') promptReminder();
+else if (args.action === 'pre-tool') preToolGate();
 else if (args.action === 'plan') planCommand(args);
 else if (args.action === 'run') runDelegate(args);
 else if (args.action === 'report') reportDelegate(args);
