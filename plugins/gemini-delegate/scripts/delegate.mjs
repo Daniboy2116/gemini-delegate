@@ -464,7 +464,16 @@ function sessionStart() {
 
 // UserPromptSubmit hook: SessionStart rules fade in long sessions, so re-arm the trigger every turn (~60 tokens).
 function promptReminder() {
-  console.log('gemini-delegate: before spawning a Claude subagent, doing web research, or bulk/mechanical/scoped edits, invoke the `gemini-delegate` skill (Skill tool) and send that work to agy unless it needs this conversation\'s context.');
+  const skillPath = fwd(path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'skills', 'gemini-delegate', 'SKILL.md'));
+  let prompt = '';
+  try { prompt = JSON.parse(fs.readFileSync(0, 'utf8')).prompt || ''; } catch {}
+  // Plugin skills are namespaced (/gemini-delegate:gemini-delegate), so a bare /gemini-delegate arrives as plain text: load it explicitly.
+  const m = prompt.trim().match(/^\/gemini-delegate(?::gemini-delegate)?\b([\s\S]*)$/i);
+  if (m) {
+    console.log(`The user invoked /gemini-delegate. Before anything else, invoke the \`gemini-delegate:gemini-delegate\` skill with the Skill tool (if that fails, Read ${skillPath} in full) and follow it for this request: ${m[1].trim() || '(no arguments: ask what to delegate)'}`);
+    return;
+  }
+  console.log(`gemini-delegate: before spawning a Claude subagent, doing web research, or bulk/mechanical/scoped edits, invoke the \`gemini-delegate:gemini-delegate\` skill (Skill tool; if unavailable, Read ${skillPath}) and send that work to agy unless it needs this conversation's context.`);
 }
 
 const args = parseArgs(process.argv.slice(2));
